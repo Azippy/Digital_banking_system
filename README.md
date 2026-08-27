@@ -1,6 +1,10 @@
 # Digital Banking System API
 
-A Node.js and Express API for customer registration, authentication, customer profiles, BVN onboarding, and account creation. MongoDB stores local customer and account records, while BVN and account operations are delegated to the configured NIBSS-compatible service.
+A Node.js and Express digital banking API currently in development. The project supports customer registration and login, JWT-protected access, BVN onboarding and validation, account creation and synchronization, balance checks, name enquiry, transfers, transaction history, and transaction-status lookup. MongoDB stores local records while banking operations are delegated to a configured NIBSS-compatible service.
+
+## Project Status
+
+Core customer, BVN, account, and transaction flows are implemented as an API prototype. NIBSS integration remains dependent on the configured service's endpoint paths, credentials, request fields, response format, and network availability. Use test credentials and test accounts while the integration is being verified.
 
 ## Requirements
 
@@ -26,6 +30,7 @@ NIBSS_API_BASE_URL=<private-nibss-api-url>
 NIBSS_AUTH_BASE_URL=<private-nibss-auth-url>
 NIBSS_API_KEY=<private-nibss-api-key>
 NIBSS_API_SECRET=<private-nibss-api-secret>
+BANK_NAME=<configured-bank-name>
 ```
 
 The application reads these values at startup. The README intentionally does not contain real connection strings, URLs, tokens, API keys, or secrets. Use your deployment secret manager or local environment file to provide them.
@@ -160,6 +165,40 @@ Requires authentication. Attempts to find the customer's existing NIBSS account 
 }
 ```
 
+### Transactions
+
+`POST /api/transactions/transfer`
+
+Requires authentication and a locally stored sender account. The API performs name enquiry and a balance check, creates a pending local transaction, and forwards the transfer to the NIBSS service.
+
+```json
+{
+  "to": "<recipient-account-number>",
+  "amount": 1000,
+  "bankCode": "<recipient-bank-code>"
+}
+```
+
+On success, the response includes two identifiers:
+
+- `refrence`: the reference generated and stored by this application.
+- `externalReference`: the transaction identifier returned by NIBSS and used for provider status lookup.
+
+`GET /api/transactions`
+
+Requires authentication and returns the authenticated customer's transactions, newest first.
+
+`GET /api/transactions/:reference/status`
+
+Requires authentication and accepts either the local `refrence` or the NIBSS `externalReference`. The local transaction must contain a provider reference before NIBSS status lookup can be performed.
+
+Example:
+
+```http
+GET /api/transactions/<local-or-provider-reference>/status
+Authorization: Bearer <jwt-token>
+```
+
 ### NIBSS authentication
 
 `POST /api/nibss/login`
@@ -197,7 +236,10 @@ server.js     Database connection and server startup
 
 - NIN onboarding is not implemented.
 - Automated tests are not currently included.
-- Account creation depends on the configured NIBSS-compatible service being available.
+- Account creation, name enquiry, balance checks, transfers, and status checks depend on the configured NIBSS-compatible service being available and matching the expected API contract.
+- A transaction is saved locally as `PENDING` before the external transfer completes; failed or interrupted requests require reconciliation.
+- Older transactions without `externalReference` cannot be checked against NIBSS.
+- Environment-specific configuration and NIBSS credentials must be supplied privately through `.env` or a deployment secret manager.
 
 ## License
 

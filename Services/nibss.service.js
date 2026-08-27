@@ -13,18 +13,26 @@ const nibssApi = axios.create({
   },
 });
 
-const handleNibssError = (error) => {
+const handleNibssError = (error, operation = "NIBSS request") => {
   if (error.response) {
+    const responseData = error.response.data;
+    const providerMessage =
+      responseData?.message || responseData?.error || "No provider message";
     const apiError = new Error(
-      error.response.data?.message || "NibssByPhoenix API returned an error",
+      `${operation} failed: ${providerMessage} (HTTP ${error.response.status})`,
     );
 
     apiError.statusCode = error.response.status;
+    apiError.details = responseData;
     throw apiError;
   }
   if (error.request) {
-    const apiError = new Error("No response received from NibssByPhoenix API");
+    const networkCode = error.code ? ` (${error.code})` : "";
+    const apiError = new Error(
+      `${operation} failed: No response received from NibssByPhoenix API${networkCode}`,
+    );
     apiError.statusCode = 503;
+    apiError.code = error.code;
     throw apiError;
   }
   throw error;
@@ -38,7 +46,7 @@ const loginToNibss = async () => {
     });
     return response.data;
   } catch (error) {
-    handleNibssError(error);
+    handleNibssError(error, "NIBSS login");
   }
 };
 const getNibssToken = async () => {
@@ -70,7 +78,7 @@ const validatBvn = async (bvn) => {
     );
     return response.data;
   } catch (error) {
-    handleNibssError(error);
+    handleNibssError(error, "BVN validation");
   }
 };
 
@@ -82,7 +90,7 @@ const createAccount = async (accountData) => {
     });
     return response.data;
   } catch (error) {
-    handleNibssError(error);
+    handleNibssError(error, "Account creation");
   }
 };
 
@@ -101,7 +109,7 @@ const getNibssAccounts = async () => {
     return response.data;
   } catch (error) {
     //console.log("NIBSS Response:", error.Response?.data);
-    handleNibssError(error);
+    handleNibssError(error, "Account retrieval");
   }
 };
 
@@ -118,7 +126,7 @@ const getAccountBalance = async (accountNumber) => {
     );
     return response.data;
   } catch (error) {
-    handleNibssError(error);
+    handleNibssError(error, "Balance lookup");
   }
 };
 
@@ -131,7 +139,32 @@ const nameEnquiry = async (accountNumber) => {
     );
     return response.data;
   } catch (error) {
-    handleNibssError(error);
+    handleNibssError(error, "Name enquiry");
+  }
+};
+
+const transferMoney = async (from, to, amount, bankCode) => {
+  try {
+    const token = await getNibssToken();
+    const response = await nibssApi.post(
+      "/api/transfer",
+      { from, to, amount, bankCode },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return response.data;
+  } catch (error) {
+    handleNibssError(error, "Money transfer");
+  }
+};
+const checkTransactionStatusService = async (transactionId) => {
+  try {
+    const token = await getNibssToken();
+    const response = await nibssApi.get(`/api/transaction/${transactionId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    handleNibssError(error, "Transaction status lookup");
   }
 };
 
@@ -147,4 +180,6 @@ module.exports = {
   getNibssAccounts,
   getAccountBalance,
   nameEnquiry,
+  transferMoney,
+  checkTransactionStatusService,
 };

@@ -1,10 +1,13 @@
 const Account = require("../Model/account.model.js");
+const Transaction = require("../Model/transaction.model.js");
 const {
   createAccount,
   getNibssAccounts,
   getAccountBalance,
   nameEnquiry,
+  transferMoney,
 } = require("../Services/nibss.service.js");
+const generateTransactionReference = require("../utility/generate.transactionreference.js");
 
 const createCustomerAccount = async (req, res) => {
   try {
