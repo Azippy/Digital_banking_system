@@ -33,6 +33,7 @@ const validateCustomerBvn = async (req, res) => {
     req.user.onboardingMethod = "BVN";
     req.user.onboardingStatus = "VERIFIED";
     req.user.isVerified = true;
+    req.user.bvn = bvn;
     await req.user.save();
     return res.status(200).json({
       message: "BVN Validated Successfully, Customer is Verified",
@@ -40,7 +41,9 @@ const validateCustomerBvn = async (req, res) => {
     });
   } catch (error) {
     console.error(error.message);
-    return res.status(500).json({ message: "BVN Validation Failed" });
+    return res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "BVN Validation Failed" });
   }
 };
 

@@ -74,6 +74,37 @@ const validatBvn = async (bvn) => {
   }
 };
 
+const createAccount = async (accountData) => {
+  try {
+    const token = await getNibssToken();
+    const response = await nibssApi.post("/api/account/create", accountData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    handleNibssError(error);
+  }
+};
+
+const getNibssAccounts = async () => {
+  try {
+    const token = await getNibssToken();
+
+    // const config = { headers: { Authorization: `Bearer ${token}` } };
+    // console.log("Token Received:", token);
+
+    const response = await nibssApi.get("/api/accounts", {
+      header: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    //console.log("NIBSS Response:", error.Response?.data);
+    handleNibssError(error);
+  }
+};
+
 module.exports = {
   nibssApi,
   nibssAuthApi,
@@ -82,4 +113,6 @@ module.exports = {
   getNibssToken,
   createBvn,
   validatBvn,
+  createAccount,
+  getNibssAccounts,
 };
