@@ -105,6 +105,36 @@ const getNibssAccounts = async () => {
   }
 };
 
+const getAccountBalance = async (accountNumber) => {
+  try {
+    const token = await getNibssToken();
+    const response = await nibssApi.get(
+      `/api/account/balance/${accountNumber}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    handleNibssError(error);
+  }
+};
+
+const nameEnquiry = async (accountNumber) => {
+  try {
+    const token = await getNibssToken();
+    const response = await nibssApi.get(
+      `/api/account/name-enquiry/${accountNumber}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return response.data;
+  } catch (error) {
+    handleNibssError(error);
+  }
+};
+
 module.exports = {
   nibssApi,
   nibssAuthApi,
@@ -115,4 +145,6 @@ module.exports = {
   validatBvn,
   createAccount,
   getNibssAccounts,
+  getAccountBalance,
+  nameEnquiry,
 };

@@ -2,6 +2,8 @@ const Account = require("../Model/account.model.js");
 const {
   createAccount,
   getNibssAccounts,
+  getAccountBalance,
+  nameEnquiry,
 } = require("../Services/nibss.service.js");
 
 const createCustomerAccount = async (req, res) => {
@@ -57,12 +59,10 @@ const createCustomerAccount = async (req, res) => {
       .json({ message: "Account Created Successfully", account });
   } catch (error) {
     console.error("Local account save failed:", error);
-    return res
-      .status(500)
-      .json({
-        message:
-          "Account was created successfully on NIBSS, but failed to save locally, please synchronize ,Account Creation Failed",
-      });
+    return res.status(500).json({
+      message:
+        "Account was created successfully on NIBSS, but failed to save locally, please synchronize ,Account Creation Failed",
+    });
   }
 };
 
@@ -122,4 +122,58 @@ const syncMyAccount = async (req, res) => {
   }
 };
 
-module.exports = { createCustomerAccount, getMyAccount, syncMyAccount };
+const checkMyBalance = async (req, res) => {
+  try {
+    const account = await Account.findOne({ customer: req.user._id });
+    if (!account) {
+      return res.status(404).json({ message: "Account Not Found" });
+    }
+    const balanceData = await getAccountBalance(account.accountNumber);
+    account.balance = balanceData.balance;
+    await account.save();
+
+    return res.status(200).json({
+      message: "Balance Retrieved Successfully",
+      accountName: balanceData.accountName,
+      accountNumber: balanceData.accountNumber,
+    });
+  } catch (error) {
+    console.error("Balance Check Error:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed To retrieve account Balance" });
+  }
+};
+
+const nameEnquiryController = async (req, res) => {
+  try {
+    const { accountNumber } = req.params;
+    if (!accountNumber) {
+      return res.status(400).json({ message: "Account number is required" });
+    }
+    const senderAccount = await Account.findOne({ customer: req.user._id });
+    if (senderAccount?.accountNumber === accountNumber) {
+      return res.status(400).json({
+        message: " You can not perform name enquiry on your own account",
+      });
+    }
+
+    const recipient = await nameEnquiry(accountNumber);
+    return res
+      .status(200)
+      .json({ message: "Name Enquiry Successful", recipient });
+  } catch (error) {
+    console.error("Name Enquiry Error:", error);
+    return res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed To Perform Name Enquiry" });
+  }
+};
+
+module.exports = {
+  createCustomerAccount,
+  getMyAccount,
+  syncMyAccount,
+  checkMyBalance,
+  nameEnquiryController,
+};
