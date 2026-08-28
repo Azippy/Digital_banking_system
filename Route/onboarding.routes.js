@@ -3,6 +3,7 @@ const {
   onboardWithBvn,
   validateCustomerBvn,
   onboardWithNin,
+  validateCustomerNin,
 } = require("../Controller/onboarding.controller.js");
 const protect = require("../Middleware/auth.middleware.js");
 const router = express.Router();
@@ -10,5 +11,6 @@ const router = express.Router();
 router.post("/bvn", protect, onboardWithBvn);
 router.post("/bvn/validate", protect, validateCustomerBvn);
 router.post("/nin", protect, onboardWithNin);
+router.post("/nin/validate", protect, validateCustomerNin);
 
 module.exports = router;

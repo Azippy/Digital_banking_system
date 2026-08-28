@@ -82,6 +82,32 @@ const validatBvn = async (bvn) => {
   }
 };
 
+const createNin = async (ninData) => {
+  try {
+    const token = await getNibssToken();
+    const response = await nibssApi.post("/api/insertNin", ninData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    handleNibssError(error);
+  }
+};
+
+const validateNin = async (nin) => {
+  try {
+    const token = await getNibssToken();
+    const response = await nibssApi.post(
+      "/api/validateNin",
+      { nin },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return response.data;
+  } catch (error) {
+    handleNibssError(error);
+  }
+};
+
 const createAccount = async (accountData) => {
   try {
     const token = await getNibssToken();
@@ -176,6 +202,8 @@ module.exports = {
   getNibssToken,
   createBvn,
   validatBvn,
+  createNin,
+  validateNin,
   createAccount,
   getNibssAccounts,
   getAccountBalance,

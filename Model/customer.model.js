@@ -32,6 +32,12 @@ const customerSchema = new mongoose.Schema(
       sparse: true,
       trim: true,
     },
+    nin: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
     onboardingMethod: {
       type: String,
       enum: ["BVN", "NIN", null],
